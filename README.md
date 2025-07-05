@@ -2,7 +2,7 @@
 
 **Live Demo:** [https://payment-solution-guide-for-nigerian.vercel.app/](https://payment-solution-guide-for-nigerian.vercel.app/)
 
-![Payment Solutions Guide Screenshot](/home/ubuntu/screenshots/payment_solution_053708.png)
+![Payment Solutions Guide Screenshot](/payment_solution.png)
 
 ## 📋 Overview
 
