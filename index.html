@@ -903,5 +903,22 @@
     </footer>
 
     <script src="script.js"></script>
+<div id="prayer-chat-chatbot-2" data-chatbot-id="2"></div>
+<script>
+    (function() {
+        var script = document.createElement('script');
+        script.src = 'https://chatbot-backend-4mp4.onrender.com/js/chatbot-widget.js';
+        script.async = true;
+        script.onload = function() {
+            PrayerChat.init({
+                chatbotId: 2,
+                apiUrl: 'https://chatbot-backend-4mp4.onrender.com/api',
+                theme: 'default'
+            });
+        };
+        document.head.appendChild(script);
+    })();
+</script>
+
 </body>
 </html>
