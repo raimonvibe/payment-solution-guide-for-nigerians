@@ -903,21 +903,28 @@
     </footer>
 
     <script src="script.js"></script>
-<div id="prayer-chat-chatbot-5" data-chatbot-id="5"></div>
+<div id="prayer-chat-chatbot-6" data-chatbot-id="6"></div>
 <script>
-    (function() {
-        var script = document.createElement('script');
-        script.src = 'https://chatbot-backend-4mp4.onrender.com/js/chatbot-widget.js';
-        script.async = true;
-        script.onload = function() {
-            PrayerChat.init({
-                chatbotId: 5,
-                apiUrl: 'https://chatbot-backend-4mp4.onrender.com/api',
-                theme: 'default'
-            });
-        };
-        document.head.appendChild(script);
-    })();
+(function() {
+    var embedChatbotId = 6;
+    var baseUrl = 'https://chatbot-backend-4mp4.onrender.com';
+    var script = document.createElement('script');
+    script.src = baseUrl + '/js/chatbot-widget.js';
+    script.async = true;
+    script.onerror = function() {
+        var el = document.getElementById('prayer-chat-chatbot-' + embedChatbotId) || document.querySelector('[data-chatbot-id="' + embedChatbotId + '"]');
+        if (el) el.innerHTML = '<p style="padding:12px;background:#fff3cd;border:1px solid #ffc107;border-radius:8px;font-family:sans-serif;font-size:14px;">Chat could not load. Check browser console (F12) or Content-Security-Policy.</p>';
+    };
+    script.onload = function() {
+        if (typeof PrayerChat !== 'undefined' && PrayerChat.init) {
+            PrayerChat.init({ chatbotId: 6, apiUrl: baseUrl + '/api', theme: 'default' });
+        } else {
+            var el = document.getElementById('prayer-chat-chatbot-' + embedChatbotId) || document.querySelector('[data-chatbot-id="' + embedChatbotId + '"]');
+            if (el) el.innerHTML = '<p style="padding:12px;background:#f8d7da;border:1px solid #f5c6cb;border-radius:8px;font-family:sans-serif;font-size:14px;">Chat failed to start. Open console (F12) for details.</p>';
+        }
+    };
+    document.head.appendChild(script);
+})();
 </script>
 
 </body>
