@@ -380,16 +380,29 @@ class SearchManager {
     }
 
     indexContent() {
-        const searchableElements = document.querySelectorAll('h3, h4, h5, p, li');
-        searchableElements.forEach(element => {
+        const selector = [
+            'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+            'p', 'li',
+            '.dropdown-header span',
+            '.tab-button',
+            '.nav-logo span',
+            '.stat-label', '.stat-number'
+        ].join(', ');
+
+        const seen = new Set();
+        document.querySelectorAll(selector).forEach(element => {
+            if (element.closest('.search-container')) return;
+            if (seen.has(element)) return;
+            seen.add(element);
+
             const text = element.textContent.trim();
-            if (text.length > 10) {
-                this.allContent.push({
-                    text: text,
-                    element: element,
-                    section: this.findParentSection(element)
-                });
-            }
+            if (text.length < 2) return;
+
+            this.allContent.push({
+                text: text,
+                element: element,
+                section: this.findParentSection(element)
+            });
         });
     }
 
@@ -397,15 +410,33 @@ class SearchManager {
         const dropdownContent = element.closest('.dropdown-content');
         if (dropdownContent) {
             const header = dropdownContent.previousElementSibling;
-            return header.querySelector('span').textContent;
+            const span = header && header.querySelector('span');
+            if (span) return span.textContent.trim();
         }
+
+        const dropdownHeader = element.closest('.dropdown-header');
+        if (dropdownHeader) {
+            const span = dropdownHeader.querySelector('span');
+            if (span) return span.textContent.trim();
+        }
+
+        const section = element.closest('section');
+        if (section) {
+            const heading = section.querySelector('h2');
+            if (heading) return heading.textContent.trim();
+        }
+
+        if (element.closest('.hero')) return 'Overview';
+        if (element.closest('.navbar')) return 'Navigation';
+        if (element.closest('footer')) return 'Footer';
+
         return 'General';
     }
 
     setupSearchListeners() {
         this.searchInput.addEventListener('input', (e) => {
             const query = e.target.value.trim().toLowerCase();
-            if (query.length > 2) {
+            if (query.length > 0) {
                 this.performSearch(query);
             } else {
                 this.clearResults();
@@ -420,10 +451,11 @@ class SearchManager {
     }
 
     performSearch(query) {
-        const results = this.allContent.filter(item => 
+        const results = this.allContent.filter(item =>
             item.text.toLowerCase().includes(query)
         ).slice(0, 10); // Limit to 10 results
 
+        this.lastResults = results;
         this.displayResults(results, query);
     }
 
@@ -431,42 +463,63 @@ class SearchManager {
         if (results.length === 0) {
             this.searchResults.innerHTML = '<div class="no-results">No results found</div>';
         } else {
-            const resultsHTML = results.map(result => `
-                <div class="search-result-item" data-section="${result.section}">
-                    <div class="result-section">${result.section}</div>
+            const resultsHTML = results.map((result, idx) => `
+                <div class="search-result-item" data-index="${idx}">
+                    <div class="result-section">${this.escapeHtml(result.section)}</div>
                     <div class="result-text">${this.highlightQuery(result.text, query)}</div>
                 </div>
             `).join('');
-            
+
             this.searchResults.innerHTML = resultsHTML;
-            
+
             this.searchResults.querySelectorAll('.search-result-item').forEach(item => {
                 item.addEventListener('click', () => {
-                    this.navigateToResult(item.dataset.section);
+                    const idx = Number(item.dataset.index);
+                    const result = this.lastResults && this.lastResults[idx];
+                    if (result) this.navigateToElement(result.element);
                     this.clearResults();
                 });
             });
         }
-        
+
         this.searchResults.style.display = 'block';
     }
 
-    highlightQuery(text, query) {
-        const regex = new RegExp(`(${query})`, 'gi');
-        return text.replace(regex, '<mark>$1</mark>');
+    escapeHtml(str) {
+        return String(str).replace(/[&<>"']/g, ch => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        }[ch]));
     }
 
-    navigateToResult(section) {
-        const dropdownHeaders = document.querySelectorAll('.dropdown-header');
-        dropdownHeaders.forEach(header => {
-            const headerText = header.querySelector('span').textContent;
-            if (headerText === section) {
-                header.click();
-                setTimeout(() => {
-                    header.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }, 300);
-            }
-        });
+    highlightQuery(text, query) {
+        const safe = this.escapeHtml(text);
+        const safeQuery = this.escapeHtml(query).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        if (!safeQuery) return safe;
+        const regex = new RegExp(`(${safeQuery})`, 'gi');
+        return safe.replace(regex, '<mark>$1</mark>');
+    }
+
+    navigateToElement(element) {
+        if (!element) return;
+
+        const dropdownItem = element.closest('.dropdown-item');
+        if (dropdownItem && !dropdownItem.classList.contains('active')) {
+            const header = dropdownItem.querySelector('.dropdown-header');
+            if (header) header.click();
+        }
+
+        if (element.classList.contains('tab-button')) {
+            element.click();
+        }
+
+        let scrollTarget = element;
+        if (element.closest('.dropdown-header') && dropdownItem) {
+            scrollTarget = dropdownItem.querySelector('.dropdown-header') || element;
+        }
+
+        setTimeout(() => {
+            scrollTarget.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 300);
     }
 
     clearResults() {
