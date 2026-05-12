@@ -473,7 +473,10 @@ class SearchManager {
             this.searchResults.innerHTML = resultsHTML;
 
             this.searchResults.querySelectorAll('.search-result-item').forEach(item => {
-                item.addEventListener('click', () => {
+                item.addEventListener('click', (e) => {
+                    // Prevent DropdownManager's document-level click handler from
+                    // re-closing the dropdown we are about to open.
+                    e.stopPropagation();
                     const idx = Number(item.dataset.index);
                     const result = this.lastResults && this.lastResults[idx];
                     if (result) this.navigateToElement(result.element);
@@ -503,7 +506,8 @@ class SearchManager {
         if (!element) return;
 
         const dropdownItem = element.closest('.dropdown-item');
-        if (dropdownItem && !dropdownItem.classList.contains('active')) {
+        const willOpenDropdown = dropdownItem && !dropdownItem.classList.contains('active');
+        if (willOpenDropdown) {
             const header = dropdownItem.querySelector('.dropdown-header');
             if (header) header.click();
         }
@@ -517,9 +521,19 @@ class SearchManager {
             scrollTarget = dropdownItem.querySelector('.dropdown-header') || element;
         }
 
+        // Wait for the dropdown's max-height animation (0.3s in styles.css)
+        // before measuring + scrolling, so the element is in its final position.
+        const delay = willOpenDropdown ? 350 : 0;
         setTimeout(() => {
-            scrollTarget.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }, 300);
+            this.smoothScrollTo(scrollTarget);
+        }, delay);
+    }
+
+    smoothScrollTo(element) {
+        const navbar = document.querySelector('.navbar');
+        const offset = (navbar ? navbar.offsetHeight : 0) + 16;
+        const top = element.getBoundingClientRect().top + window.scrollY - offset;
+        window.scrollTo({ top, behavior: 'smooth' });
     }
 
     clearResults() {
