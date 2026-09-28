@@ -1,0 +1,17 @@
+# Dependabot keeps GitHub Actions dependencies up to date.
+# No package manager (npm/pip/etc.) in this repo, so only the github-actions
+# ecosystem applies.
+# https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: Europe/Amsterdam
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
